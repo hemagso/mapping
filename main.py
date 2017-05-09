@@ -1,5 +1,6 @@
 import os
 import requests
+import csv
 
 #Google Streetview API Key
 API_KEY = 'YOUR_API_KEY_HERE'
@@ -8,7 +9,10 @@ API_KEY = 'YOUR_API_KEY_HERE'
 BASE_URL = 'https://maps.googleapis.com/maps/api/streetview'
 
 #Output path from retrieved images
-OUTPUT_PATH = r"D:\Documents\GitHub\Lobsang\images"
+OUTPUT_PATH = r"C:\Users\hemag\Documents\GitHub\Lobsang\images"
+
+#Proxy configuration dictionary
+PROXIES = {}
 
 
 def imsize_string(imsize):
@@ -27,7 +31,32 @@ def imsize_string(imsize):
     return "{0}x{1}".format(*imsize)
 
 
-def retrieve_image(address,imsize=(244,244),heading=0):
+def request_params(address, imsize, heading=None):
+    """request_params
+
+    Returns the dictionary containing the necessary arguments for the Streetview API call.
+    See requests module documentation and the Streetview API documentation (below) for more
+    information.
+
+    request.get: http://docs.python-requests.org/en/master/api/#requests.get
+    Streetview API: https://developers.google.com/maps/documentation/streetview/
+
+    :param address: A string containing the address being searched on Google Streetview API
+    :param imsize: A tuple containing the desired image size (Default value: (244,244))
+    :param heading: The compass heading of the image, in degrees. A None value defaults heading
+    to the automatic Google Streetview heading (Default value: None)
+    :return: Request parameter dictionary
+    """
+    ret = {
+            'size': imsize_string(imsize),
+            'key': API_KEY,
+            'location': address
+        }
+    if heading:
+        ret['heading'] = heading
+    return ret
+
+def retrieve_image(address,imsize=(244,244),heading=None):
     """retrieve_image
 
     Wrap-up the call to Google Streetview API, handling the communication.
@@ -35,21 +64,36 @@ def retrieve_image(address,imsize=(244,244),heading=0):
 
     :param address: A string containing the address being searched on Google Streetview API
     :param imsize: A tuple containing the desired image size (Default value: (244,244))
-    :param heading: The compass heading of the image, in degrees (Default value: 0)
+    :param heading: The compass heading of the image, in degrees. A None value defaults heading
+    to the automatic Google Streetview heading (Default value: None)
     :return: Requests object containing the response from the server
     """
     return requests.get(
         BASE_URL,
-        params={
-            'size': imsize_string(imsize),
-            'key': API_KEY,
-            'location': address,
-            'heading' : heading
-        }
+        params=request_params(address,imsize,heading=heading),
+        proxies=PROXIES
     )
 
+def image_filename(id, heading=None):
+    """image_filename
 
-def retrieve_address(id, address, imsize=(244,244), headings=range(0,360,60)):
+    Returns the agreed upon image filename format (IMG_[ID]_[HEADING].jpg)
+
+     >> image_filename(1,60)
+     "IMG_00001_060.jpg"
+     >> image_filename(15,None)
+     "IMG_0015.jpg"
+
+    :param id: ID identifier for image files
+    :param heading: Optional compass heading identifier (Default: None)
+    :return: String following the agreed upon filename format
+    """
+    if heading:
+        return "IMG_{id:06d}_{heading:03d}.jpg".format(id=id,heading=heading)
+    else:
+        return "IMG_{id:06d}.jpg".format(id=id)
+
+def retrieve_address(id, address, imsize=(244,244), headings=[None]):
     """retrieve_address
 
     Retrieves images from a Streetview panorama at a given address. The images
@@ -59,14 +103,42 @@ def retrieve_address(id, address, imsize=(244,244), headings=range(0,360,60)):
     :param id: ID identifier for image files
     :param address: Address being searched
     :param imsize: Size two tuple containing the desired images dimensions (Default: (244,244))
-    :param headings: A list with the desired headings (Default: range(0,360,60))
+    :param headings: A list with the desired headings. A None value defaults to the automatic
+    Google Streetview heading (Default: [None])
     :return: None
 
     """
     for heading in headings:
         r = retrieve_image(address,imsize=imsize,heading=heading)
         if r.status_code == 200:
-            filepath = OUTPUT_PATH + "\IMG_{id:06d}_{heading:03d}.jpg".format(id=id,heading=heading)
+            filepath = os.path.join(OUTPUT_PATH,image_filename(id,heading=heading))
             with open(filepath,"wb") as f:
                 for chunk in r:
                     f.write(chunk)
+
+def ingest_csv(input):
+    return (int(input[0]), float(input[1]), float(input[2]))
+
+def format_lat_long(lat, long):
+    return "{lat},{long}".format(lat=lat,long=long)
+
+def retrieve_geo_csv(fpath, imsize=(244,244)):
+    """retrieve_csv
+
+    Retrieves all images listed on a csv file. This file must have the following three
+    semicolon separated fields, with no headers.
+
+    [1] ID: Numerical Image Identifier
+    [2] LAT: Latitude
+    [3] LNG: Longitude
+
+    :param fpath: Path to the input CSV
+    :param imsize: Size two tuple containing the desired images dimensions (Default: (244,244))
+    :return: None
+    """
+
+    with open(fpath,"r") as f:
+        csv_reader = csv.reader(f,delimiter=";")
+        for row in csv_reader:
+            id, lat, long = ingest_csv(row)
+            retrieve_address(id, format_lat_long(lat,long), imsize=imsize)

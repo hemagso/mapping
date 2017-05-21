@@ -3,7 +3,7 @@ import requests
 import csv
 
 #Google Streetview API Key
-API_KEY = 'YOUR_API_KEY_HERE'
+API_KEY = 'AIzaSyDCxDZkvktXez6WJF9CS70Xb3_c39lOd3M'
 
 #Google Streetview API base URL
 BASE_URL = 'https://maps.googleapis.com/maps/api/streetview'

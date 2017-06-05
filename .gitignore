@@ -49,5 +49,8 @@ Temporary Items
 #User generated files
 images
 
+#Sensitive data
+sensitive.py
+
 #Pycharm folders
 .idea

@@ -7,7 +7,7 @@ from sensitive import *
 BASE_URL = 'https://maps.googleapis.com/maps/api/streetview'
 
 #Output path from retrieved images
-OUTPUT_PATH = r"C:\Users\hemag\Documents\GitHub\Lobsang\images"
+OUTPUT_PATH = r".\images"
 
 #Proxy configuration dictionary
 PROXIES = {}
@@ -86,16 +86,16 @@ def image_filename(id, heading=None):
     :param heading: Optional compass heading identifier (Default: None)
     :return: String following the agreed upon filename format
     """
-    if heading:
+    if heading is not None:
         return "IMG_{id:06d}_{heading:03d}.jpg".format(id=id,heading=heading)
     else:
         return "IMG_{id:06d}.jpg".format(id=id)
 
-def retrieve_address(id, address, imsize=(244,244), headings=[None]):
+def retrieve_address(fid, address, output_path = ".", imsize=(244,244), headings=[None]):
     """retrieve_address
 
     Retrieves images from a Streetview panorama at a given address. The images
-    are saved to disk on the OUTPUT_PATH location, and are named after the ID
+    are saved to disk on the output_path location, and are named after the ID
     and HEADING identifiers.
 
     :param id: ID identifier for image files
@@ -109,7 +109,7 @@ def retrieve_address(id, address, imsize=(244,244), headings=[None]):
     for heading in headings:
         r = retrieve_image(address,imsize=imsize,heading=heading)
         if r.status_code == 200:
-            filepath = os.path.join(OUTPUT_PATH,image_filename(id,heading=heading))
+            filepath = os.path.join(output_path,image_filename(fid,heading=heading))
             with open(filepath,"wb") as f:
                 for chunk in r:
                     f.write(chunk)

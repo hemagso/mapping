@@ -54,3 +54,9 @@ sensitive.py
 
 #Pycharm folders
 .idea
+
+#Python folders
+__pycache__
+
+#Python compiler codes
+*.pyc

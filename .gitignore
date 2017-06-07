@@ -49,6 +49,12 @@ Temporary Items
 #User generated files
 images
 
+#Data sources giles
+data
+
+#Jupyter checkpoints
+.ipynb_checkpoints
+
 #Sensitive data
 sensitive.py
 
@@ -59,4 +65,4 @@ sensitive.py
 __pycache__
 
 #Python compiler codes
-*.pyc
+.pyc

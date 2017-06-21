@@ -92,6 +92,18 @@ def image_filename(cod_setor, coord_id, heading=None):
     else:
         return "IMG_{cod_setor:15d}_{coord_id:03d}.jpg".format(cod_setor=cod_setor,coord_id=coord_id)
 
+class GoogleAPIError(Exception):
+    """Raised when the Google API request fail because of an error
+    
+    Attributes:
+        code -- The error code returned by the Google API
+        message -- Explanation of the error, if available
+    """
+    def __init__(self,code,message):
+        self.code = code
+        self.message = "Error {code}: {message}".format(code=code,message=message)
+    
+    
 def retrieve_address(cod_setor, coord_id, address, output_path = "./images", imsize=(244,244), headings=[None]):
     """retrieve_address
 
@@ -118,6 +130,10 @@ def retrieve_address(cod_setor, coord_id, address, output_path = "./images", ims
             with open(filepath,"wb") as f:
                 for chunk in r:
                     f.write(chunk)
+        elif r.status_code == 403:
+            raise GoogleAPIError(r.status_code,"You have exceeded your Google API usage limit")
+        else:
+            raise GoogleAPIError(r.status_code,"An unknown error has ocurred")
 
 def ingest_csv(input):
     return (int(input[0]), int(input[1]), float(input[2]), float(input[3]))
@@ -146,3 +162,29 @@ def retrieve_geo_csv(fpath, output_path="./images", imsize=(244,244)):
         for row in csv_reader:
             cod_setor, coord_id, lat, long = ingest_csv(row)
             retrieve_address(cod_setor, coord_id, format_lat_long(lat,long), imsize=imsize, output_path=output_path)
+            
+def retrieve_geo_df(df, output_path="./images", imsize=(244,244)):
+    """retrieve_geo_df
+
+    Retrieves all images listed on a pandas dataframe. This dataframe must have all four fields below
+
+    [1] COD_SETOR: Numerical Image Identifier
+    [2] COORD_ID: Coordinate Unique ID over the Census Sector
+    [3] LAT: Latitude
+    [4] LNG: Longitude
+
+    :param df: Dataframe containing the list of locations to recorver
+    :param imsize: Size two tuple containing the desired images dimensions (Default: (244,244))
+    :return: None
+    """
+
+    for idx, row in df.iterrows():
+        retrieve_address(
+            row["COD_SETOR"], 
+            row["COORD_ID"], 
+            format_lat_long(row["LAT"],row["LNG"]), 
+            imsize=imsize, 
+            output_path=output_path
+        )
+                           
+            

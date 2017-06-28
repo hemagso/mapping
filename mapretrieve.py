@@ -88,9 +88,9 @@ def image_filename(cod_setor, coord_id, heading=None):
     :return: String following the agreed upon filename format
     """
     if heading is not None:
-        return "IMG_{cod_setor:15d}_{coord_id:03d}_{heading:03d}.jpg".format(cod_setor=cod_setor,coord_id=coord_id,heading=heading)
+        return "IMG_{cod_setor:15d}_{coord_id:03d}_{heading:03d}.jpg".format(cod_setor=int(cod_setor),coord_id=int(coord_id),heading=int(heading))
     else:
-        return "IMG_{cod_setor:15d}_{coord_id:03d}.jpg".format(cod_setor=cod_setor,coord_id=coord_id)
+        return "IMG_{cod_setor:15d}_{coord_id:03d}.jpg".format(cod_setor=int(cod_setor),coord_id=int(coord_id))
 
 class GoogleAPIError(Exception):
     """Raised when the Google API request fail because of an error
@@ -123,17 +123,17 @@ def retrieve_address(cod_setor, coord_id, address, output_path = "./images", ims
     for heading in headings:
         r = retrieve_image(address,imsize=imsize,heading=heading)
         if r.status_code == 200:
-            folderpath = os.path.join(output_path,str(cod_setor))
+            folderpath = os.path.join(output_path,"{cod_setor:15d}".format(cod_setor=int(cod_setor)))
             if not os.path.exists(folderpath):
                 os.makedirs(folderpath)
             filepath = os.path.join(folderpath,image_filename(cod_setor, coord_id, heading=heading))
             with open(filepath,"wb") as f:
                 for chunk in r:
                     f.write(chunk)
-        elif r.status_code == 403:
-            raise GoogleAPIError(r.status_code,"You have exceeded your Google API usage limit")
+        elif r.status_code == 500:
+            print("Skiping {cod_setor}/{coord_id} ({address})".format(cod_setor=cod_setor,coord_id=coord_id,address=address))
         else:
-            raise GoogleAPIError(r.status_code,"An unknown error has ocurred")
+            raise GoogleAPIError(r.status_code,r.reason)
 
 def ingest_csv(input):
     return (int(input[0]), int(input[1]), float(input[2]), float(input[3]))

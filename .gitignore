@@ -48,8 +48,10 @@ Temporary Items
 
 #User generated files
 images
+models
+tensorboard
 
-#Data sources giles
+#Data sources files
 data
 
 #Jupyter checkpoints

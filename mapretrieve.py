@@ -104,7 +104,7 @@ class GoogleAPIError(Exception):
         self.message = "Error {code}: {message}".format(code=code,message=message)
     
     
-def retrieve_address(cod_setor, coord_id, address, output_path = "./images", imsize=(244,244), headings=[None]):
+def retrieve_address(cod_setor, coord_id, address, output_path, imsize=(244,244), headings=[None]):
     """retrieve_address
 
     Retrieves images from a Streetview panorama at a given address. The images
@@ -141,7 +141,7 @@ def ingest_csv(input):
 def format_lat_long(lat, long):
     return "{lat},{long}".format(lat=lat,long=long)
 
-def retrieve_geo_csv(fpath, output_path="./images", imsize=(244,244)):
+def retrieve_geo_csv(fpath, output_path, imsize=(244,244)):
     """retrieve_csv
 
     Retrieves all images listed on a csv file. This file must have the following three
@@ -163,7 +163,7 @@ def retrieve_geo_csv(fpath, output_path="./images", imsize=(244,244)):
             cod_setor, coord_id, lat, long = ingest_csv(row)
             retrieve_address(cod_setor, coord_id, format_lat_long(lat,long), imsize=imsize, output_path=output_path)
             
-def retrieve_geo_df(df, output_path="./images", imsize=(244,244)):
+def retrieve_geo_df(df, output_path, imsize=(244,244)):
     """retrieve_geo_df
 
     Retrieves all images listed on a pandas dataframe. This dataframe must have all four fields below
